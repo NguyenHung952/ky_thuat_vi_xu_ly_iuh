@@ -1,0 +1,58 @@
+ORG 0000H
+TG    EQU 20H
+KQ    EQU 21H
+CK    EQU 22H
+SLDL  EQU 23H
+
+TD1:
+        MOV     KQ, #0FFH
+        MOV     CK, #8
+
+X_TAT:
+        MOV     SLDL, CK
+        MOV     TG, #00H
+        SETB    C
+X0_TAT:
+        MOV     A, TG
+        RLC     A
+        MOV     TG, A
+        CPL     A
+        ANL     A, KQ
+        MOV     P1, A
+        LCALL   DELAY
+        DJNZ    SLDL, X0_TAT
+        MOV     KQ, P1
+        DJNZ    CK, X_TAT
+
+        MOV     KQ, #00H
+        MOV     CK, #8
+
+X1:
+        MOV     SLDL, CK
+        MOV     TG, #00H
+        SETB    C
+X0:
+        MOV     A, TG
+        RLC     A
+        MOV     TG, A
+        ORL     A, KQ
+        MOV     P1, A
+        LCALL   DELAY
+        DJNZ    SLDL, X0
+        MOV     KQ, P1
+        DJNZ    CK, X1
+
+        SJMP    TD1
+
+DELAY:
+        MOV     R7, #3
+DEL:
+        MOV     R6, #255
+DEL1:
+        MOV     R5, #255
+        DJNZ    R5, $
+        DJNZ    R6, DEL1
+        DJNZ    R7, DEL
+        RET
+
+END

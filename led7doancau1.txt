@@ -1,0 +1,70 @@
+ORG 0000H
+TD1:
+    MOV R0, #00H
+    CLR P2.0
+    CLR P2.1
+X11:
+    LCALL HEX_BCD
+    LCALL BCD_7DOAN
+    LCALL DELAY_HIENTHI
+    INC R0
+    CJNE R0, #60, X11
+    SJMP TD1
+
+HEX_BCD:
+    MOV A, R0
+    MOV B, #10
+    DIV AB
+    MOV 20H, B
+    MOV 21H, A
+    RET
+
+BCD_7DOAN:
+    MOV DPTR, #BANG
+    MOV A, 20H
+    MOVC A, @A+DPTR
+    MOV 30H, A
+    MOV A, 21H
+    MOVC A, @A+DPTR
+    MOV 31H, A
+    RET
+
+HIENTHI:
+    MOV P0, 31H
+    SETB P2.0
+    CLR P2.0
+    MOV P0, #0BBH
+    SETB P2.1
+    CLR P2.1
+    LCALL DELAY
+    MOV P0, #0FFH
+    SETB P2.1
+    CLR P2.1
+    MOV P0, 30H
+    SETB P2.0
+    CLR P2.0
+    MOV P0, #77H
+    SETB P2.1
+    CLR P2.1
+    LCALL DELAY
+    MOV P0, #0FFH
+    SETB P2.1
+    CLR P2.1
+    RET
+
+DELAY_HIENTHI:
+    MOV R7, #3
+DEL1:
+    MOV R6, #200
+DEL:
+    LCALL HIENTHI
+    DJNZ R6, DEL
+    DJNZ R7, DEL1
+    RET
+
+DELAY:
+    MOV R2, #200
+    DJNZ R2, $
+    RET
+
+BANG: DB 3FH,06H,5BH,4FH,66H,6DH,7DH,07H,7FH,6FH
