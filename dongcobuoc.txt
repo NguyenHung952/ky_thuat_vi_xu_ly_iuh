@@ -1,0 +1,131 @@
+Điều khiển động cơ bước quay thuận
+ORG	0000H
+TD1: SETB	  C
+	MOV       A,#00H
+X11: RLC         A
+	MOV	  P3,A
+	LCALL    DELAY
+	JNB	  P3.3,X11
+	SJMP       TD1
+DELAY:
+	 MOV R3,#100
+LAP:	MOV    R2,#100
+	DJNZ    R2,$
+	DJNZ    R3,LAP
+	RET
+End
+
+Điều khiển động cơ bước quay nghịch
+Org	0000h
+Td2:    CLR	        C
+	MOV	        A,#10h
+x12:    RRC	        A
+	MOV	        p3,A
+	LCALL       delay
+	JnB	        p3.0,x12
+	 SJMP      td2
+
+DELAY:      MOV     R3,#100
+LAP:		MOV    R2,#10
+	          DJNZ    R2,$
+	          DJNZ R3,LAP
+RET
+     End
+
+Động cơ bước 1 bước 1.8 độ cấp đủ 4 pha được 7.2 quay 1 vòng gọi 50 lần
+Viết chương trình động cơ bước quay thuận 1 vòng dừng 2s quay nghịch 1 vòng. Thạch anh 12Mhz sử dụng Timer 1
+Giả sử delay 0.5s chạy được động cơ bước 
+ORG 0000H
+	MOV	TMOD,#10H
+TD1:	MOV 	R5,#50
+X11:	LCALL THUAN
+	DJNZ	R5,X11
+	MOV 	R6,#4
+X13:	LCALL DELAY
+	DJNZ	R6,X13
+	MOV 	R5,#50
+X12:	LCALL NGHICH
+	DJNZ	R5,X12
+	SJMP TD1
+THUAN: 	SETB	  C
+		MOV       A,#00H
+X21: 		RLC         A
+		MOV	  P3,A
+		LCALL    DELAY
+		JNB	  P3.3,X21
+RET
+
+
+
+
+Dựa vào các code mẫu hãy:
+Viết chương trình động cơ bước quay thuận 1 vòng dừng 5s quay nghịch 1 vòng dừng 2s. Thạch anh 12Mhz sử dụng Timer 1
+
+
+ORG 0000H
+    MOV TMOD, #10H        ; Cai dat Timer1 che do 16 bit
+
+MAIN:
+    MOV R7, #2            ; Lap ngoai 2 lan (2 x 256 = 512 buoc)
+THUAN_LOOP:
+        MOV R6, #0        ; Bat dau tu 0
+THUAN_LOOP_INNER:
+        LCALL THUAN       ; Goi ham quay thuan 1 buoc
+        INC R6            ; Tang R6 len 1
+        CJNE R6, #0, THUAN_LOOP_INNER ; Neu R6 chua ve 0 thi lap lai (256 lan)
+        DJNZ R7, THUAN_LOOP ; Lap ngoai 2 lan de du 512 buoc
+
+    MOV R5, #10           ; Dung 5 giay (0.5s x 10)
+DELAY_5S:
+    LCALL DELAY           ; Goi ham delay 0.5s
+    DJNZ R5, DELAY_5S     ; Lap lai 10 lan
+
+    MOV R7, #2            ; Lap ngoai 2 lan (2 x 256 = 512 buoc)
+NGHICH_LOOP:
+        MOV R6, #0
+NGHICH_LOOP_INNER:
+        LCALL NGHICH      ; Goi ham quay nghich 1 buoc
+        INC R6
+        CJNE R6, #0, NGHICH_LOOP_INNER
+        DJNZ R7, NGHICH_LOOP
+
+    MOV R5, #4            ; Dung 2 giay (0.5s x 4)
+DELAY_2S:
+    LCALL DELAY
+    DJNZ R5, DELAY_2S
+
+    SJMP MAIN             ; Lap lai chuong trinh
+
+; Ham quay thuan 1 buoc dong co buoc
+THUAN:
+    SETB C                ; Dat co C = 1
+    MOV  A, #00H          ; Khoi tao thanh ghi A = 0
+THUAN_STEP:
+    RLC  A                ; Quay trai bit trong A
+    MOV  P3, A            ; Dua gia tri ra cong P3 dieu khien dong co
+    LCALL DELAY           ; Delay de dong co chay on dinh
+    JNB  P3.3, THUAN_STEP ; Neu bit P3.3 = 0 thi lap lai
+    RET
+
+; Ham quay nghich 1 buoc dong co buoc
+NGHICH:
+    CLR  C                ; Xoa co C = 0
+    MOV  A, #10H          ; Khoi tao thanh ghi A = 10h
+NGHICH_STEP:
+    RRC  A                ; Quay phai bit trong A
+    MOV  P3, A            ; Dua gia tri ra cong P3 dieu khien dong co
+    LCALL DELAY           ; Delay de dong co chay on dinh
+    JNB  P3.0, NGHICH_STEP ; Neu bit P3.0 = 0 thi lap lai
+    RET
+
+; Ham delay khoang 0.5s (gia su da tinh toan dung)
+DELAY:
+    MOV R3, #100
+DELAY_LOOP1:
+    MOV R2, #100
+DELAY_LOOP2:
+    DJNZ R2, DELAY_LOOP2
+    DJNZ R3, DELAY_LOOP1
+    RET
+
+END
