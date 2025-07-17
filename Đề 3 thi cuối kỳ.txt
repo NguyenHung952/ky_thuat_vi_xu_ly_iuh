@@ -1,0 +1,103 @@
+
+
+
+
+DE THI:
+
+
+Đề 3: Viết chương trinh sử dụng ngắt ngoài nhấn P3.2 đếm 00 đến 19, nhấn P3.3 đếm 00 đến 29, không nhấn đếm 00 đến 49. Biết thạch anh sử dụng 12Mhz
+
+ORG 0000H         
+LJMP chinh           ; Nhảy đến chương trình chính
+
+ORG 0003H            ; Ngắt ngoài INT0 (P3.2)
+MOV 25H, #20         ; Nếu ngắt INT0 xảy ra → đếm đến 19 (20 giá trị)
+RETI                 ; Kết thúc ngắt
+
+ORG 0013H            ; Ngắt ngoài INT1 (P3.3)
+MOV 25H, #30         ; Nếu ngắt INT1 xảy ra → đếm đến 29 (30 giá trị)
+RETI                 ; Kết thúc ngắt
+
+chinh:               
+MOV IE, #85H         ; Bật ngắt INT0 & INT1 và EA
+SETB PX1             ; Ưu tiên cao cho INT1
+MOV 25H, #50         ; Mặc định đếm đến 49 nếu chưa ngắt
+
+TD:                  
+MOV R0, #0           ; Biến đếm từ 0
+X1:                  
+LCALL HEX_BCD        ; Chuyển R0 → BCD (chục, đơn vị)
+LCALL BCD_7DOAN      ; Mã hóa BCD sang 7 đoạn
+LCALL DELAY_HIENTHI  ; Hiển thị LED kèm delay
+INC R0               ; Tăng giá trị đếm
+MOV A, R0            
+CJNE A, 25H, X1      ; Nếu chưa đến giá trị trong 25H → lặp
+SJMP TD              ; Quay lại đếm lại từ đầu
+
+; --- Chuyển HEX sang BCD ---
+HEX_BCD:             
+MOV A, R0            
+MOV B, #10           
+DIV AB               ; A = chục, B = đơn vị
+MOV 20H, B           ; Đơn vị → 20H
+MOV 21H, A           ; Chục → 21H
+RET                  
+
+; --- Tra bảng mã hiển thị 7 đoạn ---
+BCD_7DOAN:           
+MOV DPTR, #BANG      
+MOV A, 20H           
+MOVC A, @A+DPTR      
+MOV 30H, A           ; Mã đơn vị → 30H
+MOV A, 21H           
+MOVC A, @A+DPTR      
+MOV 31H, A           ; Mã chục → 31H
+RET                  
+
+; --- Hiển thị 2 chữ số LED 7 đoạn ---
+HIENTHI:             
+MOV P0, 31H          
+SETB P2.0            
+CLR P2.0             
+MOV P0, #0BBH        ; Dummy mã chục
+SETB P2.1            
+CLR P2.1             
+LCALL DELAY          
+MOV P0, #0FFH        ; Xóa LED
+SETB P2.1            
+CLR P2.1             
+MOV P0, 30H          
+SETB P2.0            
+CLR P2.0             
+MOV P0, #77H         ; Dummy mã đơn vị
+SETB P2.1            
+CLR P2.1             
+LCALL DELAY          
+MOV P0, #0FFH        
+SETB P2.1            
+CLR P2.1             
+RET                  
+
+; --- Delay hiển thị ---
+DELAY_HIENTHI:       
+MOV R7, #3           
+DEL1:                
+MOV R6, #200         
+DEL:                 
+LCALL HIENTHI        
+DJNZ R6, DEL         
+DJNZ R7, DEL1        
+RET                  
+
+; --- Delay phụ ---
+DELAY:               
+MOV R2, #200         
+DJNZ R2, $           
+RET                  
+
+; --- Bảng mã 7 đoạn từ 0 → 9 ---
+BANG:                
+DB 3FH,06H,5BH,4FH,66H,6DH,7DH,07H,7FH,6FH 
+END
+
+Delay chống nhiễu, không có lệnh kiểm tra nút nhấn

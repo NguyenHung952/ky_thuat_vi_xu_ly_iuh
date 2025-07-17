@@ -1,0 +1,91 @@
+Đề 1: Viết chương trình điều khiển động cơ bước quay thuận 1 vòng dừng 3s, quay nghịch 1 vòng dừng 2s. Biết thạch anh 12Mhz, sử dụng Τ0
+
+ORG 0000H
+    MOV TMOD, #10H        ; Timer1 mode 16-bit
+
+MAIN:
+    ; Quay nghịch 1 vòng (512 bước)
+    MOV R6, #4            ; 4 lần lặp (4 x 128 = 512 bước)
+X3: 
+    MOV R5, #128          ; Mỗi lần 128 bước
+X12: 
+    LCALL NGHICH          ; Gọi hàm quay nghịch 1 bước
+    DJNZ R5, X12          ; Lặp 128 lần
+    DJNZ R6, X3           ; Lặp 4 lần
+
+    ; Dừng 3s (3000ms = 3 x 1000ms)
+    MOV R6, #3            ; 3 lần delay 1000ms
+X4: 
+    LCALL DELAY_1S        ; Gọi delay 1s
+    DJNZ R6, X4           ; Lặp 3 lần
+
+    ; Quay thuận 1 vòng (512 bước)
+    MOV R6, #4
+X1: 
+    MOV R5, #128
+X11: 
+    LCALL THUAN           ; Gọi hàm quay thuận 1 bước
+    DJNZ R5, X11
+    DJNZ R6, X1
+
+    ; Dừng 2s (2000ms = 2 x 1000ms)
+    MOV R6, #2            ; 2 lần delay 1000ms
+X2: 
+    LCALL DELAY_1S        ; Gọi delay 1s
+    DJNZ R6, X2
+
+    SJMP MAIN             ; Lặp vô hạn
+
+; Hàm quay thuận 1 bước
+THUAN:
+    SETB C                ; Set cờ Carry
+    MOV A, #00H           ; Xóa thanh ghi A
+X21: 
+    RLC A                 ; Quay trái qua cờ Carry
+    MOV P3, A             ; Xuất tín hiệu ra Port 3
+    LCALL DELAY_1MS       ; Delay 1ms
+    JNB P3.3, X21         ; Kiểm tra ngõ P3.3, nếu = 0 thì lặp lại
+    RET
+
+; Hàm quay nghịch 1 bước
+NGHICH:
+    CLR C                 ; Xóa cờ Carry
+    MOV A, #10H           ; Giá trị ban đầu
+X22: 
+    RRC A                 ; Quay phải qua cờ Carry
+    MOV P3, A             ; Xuất tín hiệu ra Port 3
+    LCALL DELAY_1MS       ; Delay 1ms
+    JNB P3.0, X22         ; Kiểm tra ngõ P3.0, nếu = 0 thì lặp lại
+    RET
+
+; Delay 1ms (12MHz)
+DELAY_1MS:
+    MOV R3, #10
+DELAY_LOOP1:
+    MOV R2, #100
+DELAY_LOOP2:
+    DJNZ R2, DELAY_LOOP2
+    DJNZ R3, DELAY_LOOP1
+    RET
+
+; Delay 1s (dùng Timer1)
+DELAY_1S:
+    MOV R7, #100          ; 1000ms = 100 x 10ms
+DELAY_1S_LOOP:
+    LCALL DELAY_10MS      ; Gọi delay 10ms
+    DJNZ R7, DELAY_1S_LOOP
+    RET
+
+; Delay 10ms (Timer1)
+DELAY_10MS:
+    MOV TH1, #0D8H        ; Nạp giá trị cho 10ms (12MHz)
+    MOV TL1, #0F0H
+    SETB TR1              ; Khởi động Timer1
+    JNB TF1, $            ; Chờ tràn cờ TF1
+    CLR TR1               ; Dừng Timer1
+    CLR TF1               ; Xóa cờ tràn
+    RET
+
+END
+
+Delay chống nhiễu, không có lệnh kiểm tra nút nhấn

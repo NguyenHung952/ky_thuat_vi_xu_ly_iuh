@@ -1,0 +1,99 @@
+Đề 2: Viết chương trinh sử dụng ngắt ngoài 0 (P3.2) nhấn P3.2 lần 1 chớp tắt led P1, nhấn lần 2 sáng dồn led P1, nhấn lần 3 sáng chạy từ P1.7 đến P1.0. Biết thạch anh 12Mhz sử dụng T1
+ORG 0h           
+SJMP MAIN1          ; Nhảy đến chương trình chính
+ORG 0003H
+SJMP TANG           ; Xử lý khi có ngắt ngoài 0
+ORG 0030H
+MAIN1:
+MOV TMOD, #10H      ; Timer1 ở chế độ 16-bit
+MOV IE, #10000001B  ; Cho phép ngắt ngoài 0
+MOV P1, #0FFH       ; Tắt tất cả LED
+MOV R0, #00H        ; Biến đếm số lần nhấn = 0
+TD1:
+CJNE R0, #1, REL1   ; Nếu R0 = 1 → chớp tắt LED
+LCALL CHOPTAT
+REL1:
+CJNE R0, #2, REL2   ; Nếu R0 = 2 → sáng dồn
+LCALL SANGDON
+REL2:
+CJNE R0, #3, REL3   ; Nếu R0 = 3 → sáng chạy
+LCALL SANGCHAY
+REL3:
+CJNE R0, #4, TD1    ; Nếu R0 = 4 → dừng
+LCALL DUNG
+SJMP TD1            ; Lặp lại kiểm tra
+;----------------------------
+TANG:
+JNB P3.2, $         ; Đợi nhả nút P3.2
+LCALL DELAY03S      ; Chống dội nút 0.3s
+INC R0              ; Tăng số lần nhấn
+RETI                ; Trả về từ ngắt
+;----------------------------
+DELAY:
+MOV R7, #40         ; Lặp 40 lần → ~0.4s
+DEL:
+MOV TH1, #0D8H      
+MOV TL1, #0F0H      ; Nạp giá trị trễ
+SETB TR1
+JNB TF1, $          ; Chờ tràn Timer1
+CLR TR1
+CLR TF1
+DJNZ R7, DEL
+RET
+DELAY03S:
+MOV R7, #6          ; ~0.3s bằng 6 lần
+DL03S1:
+MOV R6, #100
+DL03S:
+MOV R5, #250
+DJNZ R5, $          ; Lặp R5 lần
+DJNZ R6, DL03S
+DJNZ R7, DL03S1
+RET
+;----------------------------
+DUNG:
+MOV P1, #0FFH       ; Tắt tất cả LED
+MOV R0, #00H        ; Reset bộ đếm
+RET
+CHOPTAT:
+MOV P1, #00H        ; Sáng tất cả LED
+LCALL DELAY
+MOV P1, #0FFH       ; Tắt tất cả LED
+LCALL DELAY
+RET
+SANGCHAY:
+MOV A, #7FH         ; Bắt đầu với P1.7 sáng
+MOV R1, #8
+X11:
+MOV P1, A
+LCALL DELAY
+RR A
+DJNZ R1, X11
+RET
+;----------------------------
+; Biến dùng cho sáng dồn
+TG   EQU 20H        ; Bộ đệm tạm
+KQ   EQU 21H        ; Kết quả hiện tại
+CK   EQU 22H        ; Đếm bước ngoài
+SLDL EQU 23H        ; Đếm bước trong
+SANGDON:
+MOV KQ, #0FFH       ; Tất cả LED tắt
+MOV CK, #8          ; 8 bước sáng dồn
+X1:
+MOV SLDL, CK
+MOV TG, #0FFH
+CLR C
+X0:
+MOV A, TG
+RLC A               ; Dịch trái A
+MOV TG, A
+ANL A, KQ           ; Giữ lại LED đã sáng
+MOV P1, A
+LCALL DELAY
+DJNZ SLDL, X0       ; Lặp sáng từng LED
+MOV KQ, P1          ; Cập nhật kết quả
+DJNZ CK, X1         ; Lặp cho đến khi đủ 8 bước
+RET
+END                 ; Kết thúc chương trình
+
+Delay chống nhiễu, không có lệnh kiểm tra nút nhấn
