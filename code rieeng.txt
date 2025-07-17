@@ -1,0 +1,330 @@
+Viết chương trình động cơ bước quay thuận 1 vòng dừng 5s quay nghịch 1 vòng dừng 2s. Thạch anh 12Mhz sử dụng Timer 1
+ORG 0000H
+    MOV TMOD, #10H        ; Cai dat Timer1 che do 16 bit
+
+MAIN:
+    ; Quay nghich 512 buoc
+    MOV R6, #4
+X3: MOV R5, #128
+X12: LCALL NGHICH
+    DJNZ R5, X12
+    DJNZ R6, X3
+
+    ; Dung 5s (200 x 10 x 5ms = 10,000 x 5ms = 5s)
+    MOV R6, #50
+X4: MOV R5, #10
+X14: LCALL DELAY
+    DJNZ R5, X14
+    DJNZ R6, X4
+
+    ; Quay thuan 512 buoc
+    MOV R6, #4
+X1: MOV R5, #128
+X11: LCALL THUAN
+    DJNZ R5, X11
+    DJNZ R6, X1
+
+    ; Dung 2s (80 x 10 x 5ms = 4000 x 5ms = 2s)
+    MOV R6, #20
+X2: MOV R5, #10
+X13: LCALL DELAY
+    DJNZ R5, X13
+    DJNZ R6, X2
+
+    SJMP MAIN
+
+; Ham quay thuan 1 buoc
+THUAN:
+    SETB C
+    MOV  A, #00H
+X21: RLC  A
+    MOV  P3, A
+    LCALL DELAY
+    JNB  P3.3, X21
+    RET
+
+; Ham quay nghich 1 buoc
+NGHICH:
+    CLR  C
+    MOV  A, #10H
+X22: RRC  A
+    MOV  P3, A
+    LCALL DELAY
+    JNB  P3.0, X22
+    RET
+
+; Ham delay khoang 5ms (gia su da tinh toan dung)
+DELAY:
+    MOV R3, #10
+DELAY_LOOP1:
+    MOV R2, #200
+DELAY_LOOP2:
+    DJNZ R2, DELAY_LOOP2
+    DJNZ R3, DELAY_LOOP1
+    RET
+
+End
+
+
+Viết chương trình động cơ bước dừng 4s quay thuận 1 vòng dừng 5s quay nghịch 1 vòng. Thạch anh 12MHz sử dụng Timer 1
+ORG 0000H
+    MOV TMOD, #10H        ; Timer1 - mode 1 (16-bit)
+
+MAIN:
+    ; Dừng 4 giây
+    MOV R6, #20
+X_WAIT4:
+    MOV R5, #10
+X_W4_1:
+    LCALL DELAY
+    DJNZ R5, X_W4_1
+    DJNZ R6, X_WAIT4
+
+    ; Quay nghịch 1 vòng (512 bước)
+    MOV R6, #4
+X_NGHICH_LOOP:
+    MOV R5, #128
+X_NGHICH_STEP:
+    LCALL NGHICH
+    DJNZ R5, X_NGHICH_STEP
+    DJNZ R6, X_NGHICH_LOOP
+
+    ; Dừng 5 giây
+    MOV R6, #25
+X_WAIT5:
+    MOV R5, #10
+X_W5_1:
+    LCALL DELAY
+    DJNZ R5, X_W5_1
+    DJNZ R6, X_WAIT5
+
+    ; Quay thuận 1 vòng (512 bước)
+    MOV R6, #4
+X_THUAN_LOOP:
+    MOV R5, #128
+X_THUAN_STEP:
+    LCALL THUAN
+    DJNZ R5, X_THUAN_STEP
+    DJNZ R6, X_THUAN_LOOP
+
+    SJMP MAIN
+
+; ----------- Hàm quay thuận (1 bước) ----------
+THUAN:
+    SETB C
+    MOV A, #00H
+X_T1: 
+    RLC A
+    MOV P3, A
+    LCALL DELAY
+    JNB P3.3, X_T1
+    RET
+
+; ----------- Hàm quay nghịch (1 bước) ----------
+NGHICH:
+    CLR C
+    MOV A, #10H
+X_N1: 
+    RRC A
+    MOV P3, A
+    LCALL DELAY
+    JNB P3.0, X_N1
+    RET
+
+; ----------- Hàm delay 5ms ----------
+DELAY:
+    MOV R3, #10
+D1: MOV R2, #200
+D2: DJNZ R2, D2
+    DJNZ R3, D1
+    RET
+
+END
+
+Viết chương trình sử dụng ngắt ngoài 0 (P3.2). biết nhấn P3.2 lần 1 chớp tắt led P1, lần 2 một điểm sáng chạy từ P1.7 đến P1.0, nhấn lần 3 sáng dồn led P1, nhấn lần 4 dừng với thời gian delay 0,4s sử dụng T1. biết thạch anh 12MHz.
+*Chương trình:
+ORG 0h           
+SJMP MAIN1          ; Nhảy đến chương trình chính
+ORG 0003H
+SJMP TANG           ; Xử lý khi có ngắt ngoài 0
+ORG 0030H
+MAIN1:
+MOV TMOD, #10H      ; Timer1 ở chế độ 16-bit
+MOV IE, #10000001B  ; Cho phép ngắt ngoài 0
+MOV P1, #0FFH       ; Tắt tất cả LED
+MOV R0, #00H        ; Biến đếm số lần nhấn = 0
+TD1:
+CJNE R0, #1, REL1   ; Nếu R0 = 1 → chớp tắt LED
+LCALL CHOPTAT
+REL1:
+CJNE R0, #2, REL2   ; Nếu R0 = 2 → sáng chạy
+LCALL SANGCHAY
+REL2:
+CJNE R0, #3, REL3   ; Nếu R0 = 3 → sáng dồn
+LCALL SANGDON
+REL3:
+CJNE R0, #4, TD1    ; Nếu R0 = 4 → dừng
+LCALL DUNG
+;----------------------------
+TANG:
+JNB P3.2, $         ; Đợi nhả nút P3.2
+LCALL DELAY03S      ; Chống dội nút 0.3s
+INC R0              ; Tăng số lần nhấn
+RETI                ; Trả về từ ngắt
+;----------------------------
+DELAY:
+MOV R7, #40         ; Lặp 40 lần → ~0.4s
+DEL:
+MOV TH1, #0D8H      
+MOV TL1, #0F0H      ; Nạp giá trị trễ
+SETB TR1
+JNB TF1, $          ; Chờ tràn Timer1
+CLR TR1
+CLR TF1
+DJNZ R7, DEL
+RET
+DELAY03S:
+MOV R7, #6          ; ~0.3s bằng 6 lần
+DL03S1:
+MOV R6, #100
+DL03S:
+MOV R5, #250
+DJNZ R5, $          ; Lặp R5 lần
+DJNZ R6, DL03S
+DJNZ R7, DL03S1
+RET
+;----------------------------
+DUNG:
+MOV P1, #0FFH       ; Tắt tất cả LED
+MOV R0, #00H        ; Reset bộ đếm
+LJMP TD1            ; Quay lại chương trình chính
+RET
+CHOPTAT:
+MOV P1, #00H        ; Sáng tất cả LED
+LCALL DELAY
+MOV P1, #0FFH       ; Tắt tất cả LED
+LCALL DELAY
+SJMP TD1            ; Quay lại vòng lặp chính
+RET
+SANGCHAY:
+MOV A, #0FFH        ; Tất cả LED tắt
+CLR C               ; Xóa cờ C
+X11:
+RRC A               ; Dịch phải A
+MOV P1, A           ; Xuất ra LED
+LCALL DELAY
+JB P1.0, X11        ; Lặp đến khi P1.0 sáng
+SJMP TD1
+RET
+;----------------------------
+; Biến dùng cho sáng dồn
+TG   EQU 20H        ; Bộ đệm tạm
+KQ   EQU 21H        ; Kết quả hiện tại
+CK   EQU 22H        ; Đếm bước ngoài
+SLDL EQU 23H        ; Đếm bước trong
+SANGDON:
+X2:
+MOV KQ, #0FFH       ; Tất cả LED tắt
+MOV CK, #8          ; 8 bước sáng dồn
+X1:
+MOV SLDL, CK
+MOV TG, #0FFH
+CLR C
+X0:
+MOV A, TG
+RLC A               ; Dịch trái A
+MOV TG, A
+ANL A, KQ           ; Giữ lại LED đã sáng
+MOV P1, A
+LCALL DELAY
+DJNZ SLDL, X0       ; Lặp sáng từng LED
+MOV KQ, P1          ; Cập nhật kết quả
+DJNZ CK, X1         ; Lặp cho đến khi đủ 8 bước
+LJMP TD1
+RET
+END                 ; Kết thúc chương trình
+
+Viết phương trình sử dụng ngắt ngoài INT0 nhấn lần 1 đếm từ 00 đến 49 nếu nhấn INT1 đếm từ 00 đến 59, nếu không nhấn đếm 00 đến 99.
+*Chương trình:
+ORG 0000H         
+LJMP chinh           ; Nhảy đến chương trình chính
+ORG 0003H           
+MOV 25H, #50         ; Nếu ngắt INT0 xảy ra → đếm đến 50
+RETI                 ; Kết thúc ngắt
+ORG 0013H           
+MOV 25H, #60         ; Nếu ngắt INT1 xảy ra → đếm đến 60
+RETI                 ; Kết thúc ngắt
+chinh:               
+MOV IE, #85H         ; Bật ngắt INT0 & INT1 và EA
+SETB PX1             ; Ưu tiên cao cho INT1
+MOV 25H, #100        ; Mặc định đếm đến 100 nếu chưa ngắt
+TD:                  
+MOV R0, #0           ; Biến đếm từ 0
+X1:                  
+LCALL HEX_BCD        ; Chuyển R0 → BCD (chục, đơn vị)
+LCALL BCD_7DOAN      ; Mã hóa BCD sang 7 đoạn
+LCALL DELAY_HIENTHI  ; Hiển thị LED kèm delay
+INC R0               ; Tăng giá trị đếm
+MOV A, R0            
+CJNE A, 25H, X1      ; Nếu chưa đến giá trị trong 25H → lặp
+SJMP TD              ; Quay lại đếm lại từ đầu
+; --- Chuyển HEX sang BCD ---
+HEX_BCD:             
+MOV A, R0            
+MOV B, #10           
+DIV AB               ; A = chục, B = đơn vị
+MOV 20H, B           ; Đơn vị → 20H
+MOV 21H, A           ; Chục → 21H
+RET                  
+; --- Tra bảng mã hiển thị 7 đoạn ---
+BCD_7DOAN:           
+MOV DPTR, #BANG      
+MOV A, 20H           
+MOVC A, @A+DPTR      
+MOV 30H, A           ; Mã đơn vị → 30H
+MOV A, 21H           
+MOVC A, @A+DPTR      
+MOV 31H, A           ; Mã chục → 31H
+RET                  
+; --- Hiển thị 2 chữ số LED 7 đoạn ---
+HIENTHI:             
+MOV P0, 31H          
+SETB P2.0            
+CLR P2.0             
+MOV P0, #0BBH        ; Dummy mã chục
+SETB P2.1            
+CLR P2.1             
+LCALL DELAY          
+MOV P0, #0FFH        ; Xóa LED
+SETB P2.1            
+CLR P2.1             
+MOV P0, 30H          
+SETB P2.0            
+CLR P2.0             
+MOV P0, #77H         ; Dummy mã đơn vị
+SETB P2.1            
+CLR P2.1             
+LCALL DELAY          
+MOV P0, #0FFH        
+SETB P2.1            
+CLR P2.1             
+RET                  
+; --- Delay hiển thị ---
+DELAY_HIENTHI:       
+MOV R7, #3           
+DEL1:                
+MOV R6, #200         
+DEL:                 
+LCALL HIENTHI        
+DJNZ R6, DEL         
+DJNZ R7, DEL1        
+RET                  
+; --- Delay phụ ---
+DELAY:               
+MOV R2, #200         
+DJNZ R2, $           
+RET                  
+; --- Bảng mã 7 đoạn từ 0 → 9 ---
+BANG:                
+DB 3FH,06H,5BH,4FH,66H,6DH,7DH,07H,7FH,6FH 
+END                  ; Kết thúc chương trình

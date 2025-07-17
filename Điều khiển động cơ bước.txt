@@ -1,0 +1,162 @@
+Thuật ngữ quan trọng liên quan đến động cơ bước
+Số vòng quay mỗi phút (RPM): Thuật ngữ này thường được sử dụng khi số vòng quay được tìm thấy mỗi phút. Nó xác định tần số mà động cơ đang quay.
+Góc bước: Vì một động cơ bước quay từng bước một, nên góc mà nó quét trong một bước được gọi là Góc bước. Đối với rôto có 200 bước/răng, nó bằng 1,8 độ và đối với động cơ có 4 bước, nó bằng 90 độ.
+Các bước mỗi vòng quay: Tham số này quyết định số bước cần thiết để hoàn thành một vòng quay và được xác định bởi 360 / (Góc bước).
+Số bước mỗi giây: Như gợi ý bởi tên gọi, nó xác định các bước được bao phủ trong một giây và được đưa ra bởi
+Số bước mỗi giây = RPM x bước mỗi vòng / 60
+
+Động cơ bước quay ở các góc nhỏ để hoàn thành vòng quay 360 độ, những góc nhỏ này được gọi là bước, do đó có tên là Động cơ bước. Thông thường, một động cơ bước bao gồm 200 bước.
+200 bước = 360 độ
+1 Bước = 'x' độ
+x = 360 / 200 = 1.8 độ
+
+Loại động cơ bước
+Động cơ bước được chia thành hai loại
++ Động cơ bước đơn cực
++ Động cơ bước lưỡng cực
+
+Động cơ bước đơn cực
+Động cơ bước đơn cực có năm hoặc sáu dây, trong đó bốn dây được nối vào một trong các đầu của mỗi cuộn dây trong số bốn cuộn dây stato. Các kết nối ở trung tâm của cuộn dây được nối với nhau và được kết nối với nguồn điện 12V. Chúng được gọi là bước đơn cực vì sức mạnh luôn đến trên một cực này.
+
+Động cơ bước lưỡng cực
+Động cơ bước lưỡng cực thường có bốn dây thoát ra từ nó. Không giống như bước đơn cực, bước lưỡng cực không có kết nối trung tâm chung. Thay vào đó, chúng có hai bộ cuộn dây độc lập.
+
+Các thành phần của động cơ bước là gì
++ Stators: Stato được tạo thành từ bốn cuộn dây, được cung cấp năng lượng bởi các xung từ bộ vi điều khiển hoặc bộ điều khiển bước.
++ Cánh quạt: Số bước của rôto và sự liên kết của nó với stato xác định góc bước và các bước trên mỗi vòng quay.
++ Nam châm vĩnh cửu: Rôto được gắn trên một nam châm vĩnh cửu thu hút hoặc đẩy lùi các cuộn dây stato và do đó động cơ đẩy xảy ra.
+
+Hoạt động của động cơ bước
++ Một động cơ bước hoạt động dựa trên nguyên lý lực hút và đẩy từ. Các cuộn dây của stato được đặt trên nam châm điện được cung cấp năng lượng và khử năng lượng bởi các xung của vi điều khiển tạo ra từ bắc và nam trên các cực stato. Rôto được gắn trên một nam châm vĩnh cửu có dấu N và S vĩnh viễn.
++ Trình tự các cuộn dây được kích thích để tạo thành các cực làm cho rôto thu hút một cặp cực stato và đẩy lùi cặp kia gây chuyển động trong trục và tải được kết nối với nó. Trình tự mà các cuộn dây được cung cấp năng lượng sẽ được thảo luận chi tiết trong phần tiếp theo của bài viết này.
+
+
+Code 8051 Assembly:
+Điều khiển động cơ bước quay thuận
+ORG	0000H
+TD1: SETB	  C
+	MOV       A,#00H
+X11: RLC         A
+	MOV	  P3,A
+	LCALL    DELAY
+	JNB	  P3.3,X11
+	SJMP       TD1
+DELAY:
+	 MOV R3,#100
+LAP:	MOV    R2,#100
+	DJNZ    R2,$
+	DJNZ    R3,LAP
+	RET
+End
+
+Điều khiển động cơ bước quay nghịch
+Org	0000h
+Td2:    CLR	        C
+	MOV	        A,#10h
+x12:    RRC	        A
+	MOV	        p3,A
+	LCALL       delay
+	JnB	        p3.0,x12
+	 SJMP      td2
+
+DELAY:      MOV     R3,#100
+LAP:		MOV    R2,#10
+	          DJNZ    R2,$
+	          DJNZ R3,LAP
+RET
+     End
+
+Động cơ bước 1 bước 1.8 độ cấp đủ 4 pha được 7.2 quay 1 vòng gọi 50 lần
+Viết chương trình động cơ bước quay thuận 1 vòng dừng 2s quay nghịch 1 vòng. Thạch anh 12Mhz sử dụng Timer 1
+Giả sử delay 0.5s chạy được động cơ bước 
+ORG 0000H
+	MOV	TMOD,#10H
+TD1:	MOV 	R5,#50
+X11:	LCALL THUAN
+	DJNZ	R5,X11
+	MOV 	R6,#4
+X13:	LCALL DELAY
+	DJNZ	R6,X13
+	MOV 	R5,#50
+X12:	LCALL NGHICH
+	DJNZ	R5,X12
+	SJMP TD1
+THUAN: 	SETB	  C
+		MOV       A,#00H
+X21: 		RLC         A
+		MOV	  P3,A
+		LCALL    DELAY
+		JNB	  P3.3,X21
+RET
+
+
+
+
+Viết chương trình động cơ bước quay thuận 1 vòng dừng 5s quay nghịch 1 vòng dừng 2s. Thạch anh 12Mhz sử dụng Timer 1
+ORG 0000H
+    MOV TMOD, #10H        ; Cai dat Timer1 che do 16 bit
+
+MAIN:
+    ; Quay nghich 512 buoc
+    MOV R6, #4
+X3: MOV R5, #128
+X12: LCALL NGHICH
+    DJNZ R5, X12
+    DJNZ R6, X3
+
+    ; Dung 5s (200 x 10 x 5ms = 10,000 x 5ms = 5s)
+    MOV R6, #50
+X4: MOV R5, #10
+X14: LCALL DELAY
+    DJNZ R5, X14
+    DJNZ R6, X4
+
+    ; Quay thuan 512 buoc
+    MOV R6, #4
+X1: MOV R5, #128
+X11: LCALL THUAN
+    DJNZ R5, X11
+    DJNZ R6, X1
+
+    ; Dung 2s (80 x 10 x 5ms = 4000 x 5ms = 2s)
+    MOV R6, #20
+X2: MOV R5, #10
+X13: LCALL DELAY
+    DJNZ R5, X13
+    DJNZ R6, X2
+
+    SJMP MAIN
+
+; Ham quay thuan 1 buoc
+THUAN:
+    SETB C
+    MOV  A, #00H
+X21: RLC  A
+    MOV  P3, A
+    LCALL DELAY
+    JNB  P3.3, X21
+    RET
+
+; Ham quay nghich 1 buoc
+NGHICH:
+    CLR  C
+    MOV  A, #10H
+X22: RRC  A
+    MOV  P3, A
+    LCALL DELAY
+    JNB  P3.0, X22
+    RET
+
+; Ham delay khoang 5ms (gia su da tinh toan dung)
+DELAY:
+    MOV R3, #10
+DELAY_LOOP1:
+    MOV R2, #200
+DELAY_LOOP2:
+    DJNZ R2, DELAY_LOOP2
+    DJNZ R3, DELAY_LOOP1
+    RET
+
+End
+
+

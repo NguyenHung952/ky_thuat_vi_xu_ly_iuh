@@ -1,0 +1,67 @@
+ORG 0000H
+    MOV TMOD, #10H        ; Cai dat Timer1 che do 16 bit
+
+MAIN:
+   ; Quay nghich 512 buoc
+    MOV R6, #4
+X3: MOV R5, #128
+X12: LCALL NGHICH
+    DJNZ R5, X12
+    DJNZ R6, X3
+
+ 
+
+    ; Dung 5s 
+    MOV R6, #25
+X4: MOV R5, #100
+X14: LCALL DELAY
+    DJNZ R5, X14
+    DJNZ R6, X4
+
+   ;quay thuan
+    MOV R6, #4
+X1: MOV R5, #128
+X11: LCALL THUAN
+    DJNZ R5, X11
+    DJNZ R6, X1
+
+    ; Dung 4s 
+    MOV R6, #20
+X2: MOV R5, #100
+X13: LCALL DELAY
+    DJNZ R5, X13
+    DJNZ R6, X2
+
+    SJMP MAIN
+
+; Ham quay thuan 1 buoc
+THUAN:
+    SETB C
+    MOV  A, #00H
+X21: RLC  A
+    MOV  P3, A
+    LCALL DELAY
+    JNB  P3.3, X21
+    RET
+
+; Ham quay nghich 1 buoc
+NGHICH:
+    CLR  C
+    MOV  A, #10H
+X22: RRC  A
+    MOV  P3, A
+    LCALL DELAY
+    JNB  P3.0, X22
+    RET
+
+; Ham delay khoang 1ms 
+DELAY:
+    MOV R3, #10
+DELAY_LOOP1:
+    MOV R2, #100
+DELAY_LOOP2:
+    DJNZ R2, DELAY_LOOP2
+    DJNZ R3, DELAY_LOOP1
+    RET
+
+End
